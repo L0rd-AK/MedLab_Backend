@@ -33,12 +33,28 @@ async function run() {
     const HealthTips=client.db('MedLab').collection('Health_Tips')
     const Users=client.db('MedLab').collection('Users')
     const AllTests=client.db('MedLab').collection('AllTests')
+    const Appointments=client.db('MedLab').collection('Appointments')
     // ========================================= Health tips api =============================================================
     app.get('/tips', async(req,res)=>{
           const cursor=HealthTips.find();
           const result=await cursor.toArray();
           res.send(result)
     })
+    // ================= appointments api =============
+    app.post('/appointments', async(req,res)=>{
+      const test=req.body;
+      const result=await Appointments.insertOne(test);
+      res.send(result);
+  })
+  app.get('/appointments/:id', async(req,res)=>{
+    const id = req.params.id;
+    console.log("id",id);
+    const query = {email: id};
+    const result = Appointments.find(query);
+    const ans=await result.toArray();
+    res.send(ans)
+    
+  })
     // ================= all test api =================
     app.get('/all-tests', async(req,res)=>{
       const cursor=AllTests.find();
