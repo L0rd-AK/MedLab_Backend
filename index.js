@@ -14,6 +14,27 @@ app.use(cors({
   }));
 app.use(express.json());
  //app.use(cookieParser());
+//  ==================== Stripe things ======================
+const stripe = require("stripe")('sk_test_51Ob7HPC3ZF5K53fVTCqhHuYgS8xcN4eJlshMISkjObrHRn2yUlhvnKnvjvKt6NnNtWVV7aHL8Wkn4yFaaHdfSj0z00jUsJYU0i');
+app.use(express.static("public"));
+app.use(express.json());
+app.post("/create-payment-intent", async (req, res) => {
+  const { price } = req.body;
+  const amount=parseInt(price*100);
+  // Create a PaymentIntent with the order amount and currency
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: "usd",
+    "payment_method_types": [
+      "card",
+      "link"
+    ],
+  });
+
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+  });
+});
 // ==================== mongoDB atlas ====================
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.u9t7oll.mongodb.net/?retryWrites=true&w=majority`;
 
