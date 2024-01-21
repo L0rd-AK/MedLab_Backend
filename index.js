@@ -40,11 +40,16 @@ async function run() {
           const result=await cursor.toArray();
           res.send(result)
     })
-    // ================= appointments api =============
+    // ================= appointments api ==============
     app.post('/appointments', async(req,res)=>{
       const test=req.body;
       const result=await Appointments.insertOne(test);
       res.send(result);
+  })
+  app.get('/appointments', async(req,res)=>{
+    const cursor=Appointments.find();
+    const result=await cursor.toArray();
+    res.send(result)
   })
   app.get('/appointments/:id', async(req,res)=>{
     const id = req.params.id;
@@ -55,7 +60,34 @@ async function run() {
     res.send(ans)
     
   })
+  app.put('/appointments/:id', async(req,res)=>{
+    const id = req.params.id;
+    const filter = {_id: new ObjectId(id)};
+    const options={upsert: true}
+    const new_body=req.body;
+    
+    const Updated_user={
+      $set:{
+        approved: new_body.approved,
+      }
+      
+    }
+    const resust = await Appointments.updateOne(filter,Updated_user,options);
+    console.log(resust);
+    res.send(resust)
+  })
+  app.delete('/appointments/:id', async (req, res) => {
+    const id = req.params.id;
+    const query = {_id: new ObjectId(id)};
+    const result = await Appointments.deleteOne(query);
+    res.send(result);
+  });
     // ================= all test api =================
+    app.post('/all-tests', async(req,res)=>{
+      const test=req.body;
+      const result=await AllTests.insertOne(test);
+      res.send(result);
+  })
     app.get('/all-tests', async(req,res)=>{
       const cursor=AllTests.find();
       const result=await cursor.toArray();
@@ -69,6 +101,33 @@ async function run() {
       console.log(result);
       res.send(result)
     })
+    app.put('/all-tests/:id', async(req,res)=>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const options={upsert: true}
+      const new_body=req.body;
+      
+      const Updated_user={
+        $set:{
+          testName: new_body.testName,
+          imageUrl: new_body.imageUrl,
+          details: new_body.details,
+          price: new_body.price,
+          date: new_body.date,
+          slots: new_body.slots,
+        }
+        
+      }
+      const resust = await AllTests.updateOne(filter,Updated_user,options);
+      console.log(resust);
+      res.send(resust)
+    })
+    app.delete('/all-tests/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await AllTests.deleteOne(query);
+      res.send(result);
+    });
     // ========================= post users + update user =============================
     app.get('/users', async(req,res)=>{
       const cursor=Users.find();
@@ -80,6 +139,7 @@ async function run() {
       console.log("id",id);
       const query = {email: id};
       const result = await Users.findOne(query);
+      console.log(result);
       res.send(result)
     })
     app.post('/users', async(req,res)=>{
@@ -106,6 +166,38 @@ async function run() {
           Country: new_body.Country,
           State: new_body.State,
           User_Description: new_body.User_Description,
+        }
+        
+      }
+      const resust = await Users.updateOne(filter,Updated_user,options);
+      res.send(resust)
+    })
+    // =============== make admin api ==================
+    app.put('/makeAdmin/:id', async(req,res)=>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const options={upsert: true}
+      const new_body=req.body;
+      
+      const Updated_user={
+        $set:{
+          isAdmin: new_body.isAdmin,
+        }
+        
+      }
+      const resust = await Users.updateOne(filter,Updated_user,options);
+      res.send(resust)
+    })
+    app.put('/block/:id', async(req,res)=>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const options={upsert: true}
+      const new_body=req.body;
+      
+      // { ,,,,: User_Description }
+      const Updated_user={
+        $set:{
+          status: new_body.status,
         }
         
       }
