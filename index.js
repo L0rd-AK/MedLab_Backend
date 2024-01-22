@@ -1,7 +1,7 @@
 const express=require('express');
 const cors=require('cors');
-//const jwt=require('jsonwebtoken');
-//const cookieParser=require('cookie-parser')
+const jwt=require('jsonwebtoken');
+// const cookieParser=require('cookie-parser')
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app=express();
@@ -13,7 +13,20 @@ app.use(cors({
     credentials: true
   }));
 app.use(express.json());
- //app.use(cookieParser());
+//  app.use(cookieParser());
+// ========== custom middleware ==========
+const verifyToken=async(req,res,next)=>{
+  const token=req.headers.authorization;
+  if(!token){
+    return res.status(401).send({message:'Not Authorized'})
+  }
+  jwt.verify(token,process.env.TOKEN_KEY,(err,decoded)=>{
+      if(err)return res.status(401).send({message:'Not Authorized'})
+      req.user=decoded
+    console.log('success');
+      next()
+  })  
+}
 //  ==================== Stripe things ======================
 const stripe = require("stripe")('sk_test_51Ob7HPC3ZF5K53fVTCqhHuYgS8xcN4eJlshMISkjObrHRn2yUlhvnKnvjvKt6NnNtWVV7aHL8Wkn4yFaaHdfSj0z00jUsJYU0i');
 app.use(express.static("public"));
@@ -21,7 +34,7 @@ app.use(express.json());
 app.post("/create-payment-intent", async (req, res) => {
   const { price } = req.body;
   const amount=parseInt(price*100);
-  // Create a PaymentIntent with the order amount and currency
+  // Create a PaymentIntent with the order amount and currencyy
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amount,
     currency: "usd",
@@ -35,7 +48,7 @@ app.post("/create-payment-intent", async (req, res) => {
     clientSecret: paymentIntent.client_secret,
   });
 });
-// ==================== mongoDB atlas ====================
+// ==================== mongoDB atlas =======================
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.u9t7oll.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -55,6 +68,18 @@ async function run() {
     const Users=client.db('MedLab').collection('Users')
     const AllTests=client.db('MedLab').collection('AllTests')
     const Appointments=client.db('MedLab').collection('Appointments')
+    // ========================================= JWT secure api =============================================================
+    app.post('/jwt',async(req,res)=>{
+      const user=req.body;
+      console.log(user);
+      const token=jwt.sign(user,process.env.TOKEN_KEY,{expiresIn:'3h'})
+      res.send({token})
+    })
+    app.post('/logout',async(req,res)=>{
+      const user=req.body;
+      res.clearCookie('token',{maxAge:0})
+      .send({success: true});
+    })
     // ========================================= Health tips api =============================================================
     app.get('/tips', async(req,res)=>{
           const cursor=HealthTips.find();
@@ -150,7 +175,7 @@ async function run() {
       res.send(result);
     });
     // ========================= post users + update user =============================
-    app.get('/users', async(req,res)=>{
+    app.get('/users',verifyToken, async(req,res)=>{
       const cursor=Users.find();
       const result=await cursor.toArray();
       res.send(result)
